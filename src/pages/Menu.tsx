@@ -579,6 +579,10 @@ const Menu: React.FC = () => {
           isOpen={showSimpleStripePayment}
           onClose={() => setShowSimpleStripePayment(false)}
           onComplete={handlePaymentComplete}
+          onBackToCart={() => {
+            setShowSimpleStripePayment(false);
+            setShowCartSidebar(true);
+          }}
           customerData={tempCustomerData}
           cart={cart}
           restaurant={restaurant}

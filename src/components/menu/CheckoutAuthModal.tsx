@@ -28,20 +28,15 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
   restaurant,
   total
 }) => {
-  const [mode, setMode] = useState<'choice' | 'login' | 'signup'>('choice');
+  const [mode, setMode] = useState<'auth' | 'signup'>('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Login form
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  
-  // Signup form
-  const [signupName, setSignupName] = useState('');
-  const [signupPhone, setSignupPhone] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // Auth form (works for both login and signup)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   
   const { toast } = useToast();
@@ -63,9 +58,14 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
     return subtotal + taxAndFees;
   };
 
-  const handleLogin = async () => {
-    if (!loginEmail || !loginPassword) {
+  const handleAuth = async () => {
+    if (!email || !password) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      setError('Please agree to the terms and conditions');
       return;
     }
 
@@ -73,20 +73,76 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
     setError(null);
 
     try {
+      // Try to sign in first
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
+        email,
+        password,
       });
 
       if (error) {
-        // Check if user doesn't exist
+        // If login fails, try to create account
         if (error.message.includes('Invalid login credentials') || error.message.includes('Email not confirmed')) {
-          // User doesn't exist, show signup form
-          setSignupEmail(loginEmail);
-          setSignupPassword(loginPassword);
-          setMode('signup');
-          setError('Account not found. Please create an account to continue.');
-          return;
+          // Check if we have name and phone for signup
+          if (!name || !phone) {
+            setMode('signup');
+            setError('Account not found. Please complete your information to create an account.');
+            return;
+          }
+
+          // Create new account
+          const { data: signupData, error: signupError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                name,
+                phone
+              }
+            }
+          });
+
+          if (signupError) throw signupError;
+
+          if (signupData.user) {
+            // Create customer profile
+            await supabase
+              .from('customers')
+              .insert({
+                id: signupData.user.id,
+                name,
+                phone,
+                email,
+                restaurant_id: restaurant.id
+              });
+
+            // Save user session with tokens
+            CheckoutCookieService.saveUserLogin({
+              id: signupData.user.id,
+              email,
+              name,
+              phone
+            });
+
+            // Save customer info to cookies
+            CheckoutCookieService.saveCustomerInfo({
+              name,
+              phone,
+              email
+            });
+
+            onContinue({
+              name,
+              phone,
+              email,
+              userId: signupData.user.id
+            });
+
+            toast({
+              title: "Account Created!",
+              description: `Welcome to ${restaurant.name}, ${name}! Your account has been created successfully.`,
+            });
+            return;
+          }
         }
         throw error;
       }
@@ -100,7 +156,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
           .single();
 
         if (profile) {
-          // Save user session
+          // Save user session with tokens
           CheckoutCookieService.saveUserLogin({
             id: data.user.id,
             email: profile.email,
@@ -114,114 +170,18 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
             email: profile.email,
             userId: data.user.id
           });
-        }
-      }
-    } catch (error: any) {
-      setError(error.message || 'Login failed');
-      toast({
-        title: "Login Failed",
-        description: error.message || "Please check your credentials and try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignup = async () => {
-    if (!signupName || !signupPhone || !signupEmail || !signupPassword || !confirmPassword) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    if (signupPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (!agreedToTerms) {
-      setError('Please agree to the terms and conditions');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Create user account without email confirmation
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: signupEmail,
-        password: signupPassword,
-        options: {
-          data: {
-            name: signupName,
-            phone: signupPhone
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        try {
-          // Create customer profile
-          const { error: profileError } = await supabase
-            .from('customers')
-            .insert({
-              id: authData.user.id,
-              name: signupName,
-              phone: signupPhone,
-              email: signupEmail,
-              restaurant_id: restaurant.id
-            });
-
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            // Continue anyway - user can complete profile later
-          }
-
-          // Save user session
-          CheckoutCookieService.saveUserLogin({
-            id: authData.user.id,
-            email: signupEmail,
-            name: signupName,
-            phone: signupPhone
-          });
-
-          // Save customer info to cookies
-          CheckoutCookieService.saveCustomerInfo({
-            name: signupName,
-            phone: signupPhone,
-            email: signupEmail
-          });
-
-          onContinue({
-            name: signupName,
-            phone: signupPhone,
-            email: signupEmail,
-            userId: authData.user.id
-          });
 
           toast({
-            title: "Account Created!",
-            description: "Welcome to Bluefin Sushi! Your account has been created successfully.",
-          });
-        } catch (profileError) {
-          console.error('Profile creation failed:', profileError);
-          // Continue with checkout even if profile creation fails
-          onContinue({
-            name: signupName,
-            phone: signupPhone,
-            email: signupEmail,
-            userId: authData.user.id
+            title: "Welcome Back!",
+            description: `Great to see you again, ${profile.name}!`,
           });
         }
       }
     } catch (error: any) {
-      setError(error.message || 'Signup failed');
+      setError(error.message || 'Authentication failed');
       toast({
-        title: "Signup Failed",
-        description: error.message || "Please try again with different information.",
+        title: "Authentication Failed",
+        description: error.message || "Please check your information and try again.",
         variant: "destructive",
       });
     } finally {
@@ -242,20 +202,17 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
 
   const handlePhoneChange = (value: string) => {
     const formattedPhone = formatPhoneNumber(value);
-    setSignupPhone(formattedPhone);
+    setPhone(formattedPhone);
   };
 
   const resetForm = () => {
-    setLoginEmail('');
-    setLoginPassword('');
-    setSignupName('');
-    setSignupPhone('');
-    setSignupEmail('');
-    setSignupPassword('');
-    setConfirmPassword('');
+    setEmail('');
+    setPassword('');
+    setName('');
+    setPhone('');
     setAgreedToTerms(false);
     setError(null);
-    setMode('choice');
+    setMode('auth');
   };
 
   return (
@@ -277,17 +234,26 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
           <div className="mb-6">
             <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-lg">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-blue-900 text-lg">
-                  <ShoppingBag className="h-5 w-5" />
-                  Order Summary
-                </CardTitle>
+                <div className="flex items-center gap-3">
+                  {restaurant.logo_url && (
+                    <img 
+                      src={restaurant.logo_url} 
+                      alt={`${restaurant.name} logo`}
+                      className="h-8 w-8 object-contain"
+                    />
+                  )}
+                  <CardTitle className="flex items-center gap-2 text-blue-900 text-lg">
+                    <ShoppingBag className="h-5 w-5" />
+                    Order Summary
+                  </CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
                   {cart.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start bg-white rounded-lg p-3 shadow-sm">
+                    <div key={item.id} className="flex justify-between items-start bg-white rounded-lg p-2 shadow-sm">
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{item.product.name}</p>
+                        <p className="font-semibold text-gray-900 text-sm">{item.product.name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
                             Qty: {item.quantity}
@@ -299,12 +265,12 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                           )}
                         </div>
                       </div>
-                      <p className="font-bold text-blue-900 text-lg">${item.total_price.toFixed(2)}</p>
+                      <p className="font-bold text-blue-900">${item.total_price.toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
                 
-                <div className="border-t-2 border-blue-200 pt-4 space-y-2">
+                <div className="border-t-2 border-blue-200 pt-3 space-y-2">
                   <div className="flex justify-between text-gray-700">
                     <span className="font-medium">Subtotal:</span>
                     <span className="font-semibold">${calculateSubtotal().toFixed(2)}</span>
@@ -324,186 +290,87 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
 
           {/* Authentication */}
           <div className="space-y-4">
-            {mode === 'choice' && (
-              /* Choice Screen */
-              <Card className="bg-white shadow-lg border-2 border-gray-100">
-                <CardHeader>
-                  <CardTitle className="text-center text-gray-900 text-xl">
-                    Choose Your Option
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button
-                    onClick={() => setMode('login')}
-                    className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
-                    size="lg"
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    onClick={() => setMode('signup')}
-                    variant="outline"
-                    className="w-full h-14 text-lg font-semibold border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
-                    size="lg"
-                  >
-                    Sign Up
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {mode === 'login' && (
-              /* Login Form */
-              <Card className="bg-white shadow-lg border-2 border-gray-100">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-gray-900">
-                      <User className="h-4 w-4" />
-                      Sign In
-                    </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setMode('choice')}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ← Back
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="login-email" className="text-gray-900 font-medium">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="text-black bg-white border-gray-300 h-12"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="login-password" className="text-gray-900 font-medium">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="text-black bg-white border-gray-300 h-12"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleLogin}
-                    disabled={isLoading}
-                    className="w-full h-12 text-lg font-semibold"
-                    size="lg"
-                  >
-                    {isLoading ? 'Signing In...' : 'Sign In & Continue'}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {mode === 'signup' && (
-              /* Signup Form */
-              <Card className="bg-white shadow-lg border-2 border-gray-100">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-gray-900">
-                      <User className="h-4 w-4" />
-                      Sign Up
-                    </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setMode('choice')}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ← Back
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="signup-name" className="text-gray-900 font-medium">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={signupName}
-                      onChange={(e) => setSignupName(e.target.value)}
-                      className="text-black bg-white border-gray-300 h-12"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-phone" className="text-gray-900 font-medium">Phone Number</Label>
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      placeholder="Enter your phone number"
-                      value={signupPhone}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      className="text-black bg-white border-gray-300 h-12"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-email" className="text-gray-900 font-medium">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
-                      className="text-black bg-white border-gray-300 h-12"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-password" className="text-gray-900 font-medium">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="Create a password"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      className="text-black bg-white border-gray-300 h-12"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="confirm-password" className="text-gray-900 font-medium">Confirm Password</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="Type your password one more time"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="text-black bg-white border-gray-300 h-12"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="terms"
-                      checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="terms" className="text-sm text-gray-900">
-                      I agree to the Terms & Conditions and Privacy Policy
-                    </Label>
-                  </div>
-                  <Button
-                    onClick={handleSignup}
-                    disabled={isLoading}
-                    className="w-full h-12 text-lg font-semibold"
-                    size="lg"
-                  >
-                    {isLoading ? 'Creating Account...' : 'Create Account & Continue'}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            <Card className="bg-white shadow-lg border-2 border-gray-100">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-gray-900">
+                  <User className="h-4 w-4" />
+                  {mode === 'auth' ? 'Sign In or Create Account' : 'Complete Your Account'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="email" className="text-gray-900 font-medium">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="text-black bg-white border-gray-300 h-12"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password" className="text-gray-900 font-medium">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="text-black bg-white border-gray-300 h-12"
+                  />
+                </div>
+                
+                {mode === 'signup' && (
+                  <>
+                    <div>
+                      <Label htmlFor="name" className="text-gray-900 font-medium">Full Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="text-black bg-white border-gray-300 h-12"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone" className="text-gray-900 font-medium">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="Enter your phone number"
+                        value={phone}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        className="text-black bg-white border-gray-300 h-12"
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="terms" className="text-sm text-gray-900">
+                    I agree to the Terms & Conditions and Privacy Policy
+                  </Label>
+                </div>
+                
+                <Button
+                  onClick={handleAuth}
+                  disabled={isLoading}
+                  className="w-full h-12 text-lg font-semibold"
+                  size="lg"
+                >
+                  {isLoading ? 'Processing...' : 'Continue to Checkout'}
+                </Button>
+              </CardContent>
+            </Card>
 
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
