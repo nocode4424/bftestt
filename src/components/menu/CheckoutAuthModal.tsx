@@ -256,19 +256,19 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full max-h-[95vh] overflow-y-auto bg-white m-2 sm:m-4">
+      <DialogContent className="max-w-2xl w-full max-h-[95vh] overflow-y-auto bg-white m-2 sm:m-4">
         <DialogHeader className="bg-[#2671BC] text-white -m-6 mb-3 p-3 rounded-t-lg">
           <DialogTitle className="text-center text-white text-lg font-semibold">
-            {restaurant.name} - Checkout
+            {restaurant.name} - Sign In or Create Account
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4">
-          {/* Left Column - Order Summary */}
-          <div className="space-y-4">
-            <Card>
+        <div className="p-4">
+          {/* Order Summary */}
+          <div className="mb-6">
+            <Card className="bg-gray-50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-gray-900">
                   🛒 Order Summary
                 </CardTitle>
               </CardHeader>
@@ -276,29 +276,29 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                 {cart.map((item) => (
                   <div key={item.id} className="flex justify-between items-start">
                     <div className="flex-1">
-                      <p className="font-medium">{item.product.name}</p>
+                      <p className="font-medium text-gray-900">{item.product.name}</p>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                       {item.notes && (
                         <p className="text-xs text-gray-500">Note: {item.notes}</p>
                       )}
                     </div>
-                    <p className="font-medium">${item.total_price.toFixed(2)}</p>
+                    <p className="font-medium text-gray-900">${item.total_price.toFixed(2)}</p>
                   </div>
                 ))}
                 <div className="border-t pt-3">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-gray-900">
                     <span>Subtotal:</span>
                     <span>${calculateSubtotal().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-gray-900">
                     <span>Tax:</span>
                     <span>${calculateTax().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-gray-900">
                     <span>Processing Fee:</span>
                     <span>${calculateProcessingFee().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                  <div className="flex justify-between font-bold text-lg border-t pt-2 text-gray-900">
                     <span>Total:</span>
                     <span>${calculateGrandTotal().toFixed(2)}</span>
                   </div>
@@ -307,7 +307,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
             </Card>
           </div>
 
-          {/* Right Column - Authentication */}
+          {/* Authentication */}
           <div className="space-y-4">
             {/* Mode Toggle */}
             <div className="flex bg-gray-100 rounded-lg p-1">
@@ -335,16 +335,16 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
 
             {mode === 'login' ? (
               /* Login Form */
-              <Card>
+              <Card className="bg-white">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-gray-900">
                     <User className="h-4 w-4" />
                     Sign In to Continue
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email" className="text-gray-900">Email</Label>
                     <Input
                       id="login-email"
                       type="email"
@@ -355,7 +355,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="login-password">Password</Label>
+                    <Label htmlFor="login-password" className="text-gray-900">Password</Label>
                     <Input
                       id="login-password"
                       type="password"
@@ -377,16 +377,16 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
               </Card>
             ) : (
               /* Signup Form */
-              <Card>
+              <Card className="bg-white">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-gray-900">
                     <User className="h-4 w-4" />
                     Create Your Account
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Label htmlFor="signup-name" className="text-gray-900">Full Name</Label>
                     <Input
                       id="signup-name"
                       type="text"
@@ -397,7 +397,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-phone">Phone Number</Label>
+                    <Label htmlFor="signup-phone" className="text-gray-900">Phone Number</Label>
                     <Input
                       id="signup-phone"
                       type="tel"
@@ -408,7 +408,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="text-gray-900">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -419,7 +419,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password" className="text-gray-900">Password</Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -430,7 +430,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Label htmlFor="confirm-password" className="text-gray-900">Confirm Password</Label>
                     <Input
                       id="confirm-password"
                       type="password"
@@ -448,7 +448,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
                       className="h-4 w-4"
                     />
-                    <Label htmlFor="terms" className="text-sm">
+                    <Label htmlFor="terms" className="text-sm text-gray-900">
                       I agree to the Terms & Conditions and Privacy Policy
                     </Label>
                   </div>

@@ -9,7 +9,7 @@ import { ItemCustomizationModal } from '@/components/menu/ItemCustomizationModal
 import { CartTimeoutWarning } from '@/components/menu/CartTimeoutWarning';
 import { StripeProvider } from '@/components/payment/StripeProvider';
 import { CheckoutAuthModal } from '@/components/menu/CheckoutAuthModal';
-import { SimplePaymentModal } from '@/components/menu/SimplePaymentModal';
+import { SimpleStripePaymentModal } from '@/components/menu/SimpleStripePaymentModal';
 import { CheckoutCookieService } from '@/utils/checkoutCookieService';
 import { OrderConfirmation } from '@/components/menu/OrderConfirmation';
 import { Search } from 'lucide-react';
@@ -81,7 +81,7 @@ const Menu: React.FC = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showCheckoutAuth, setShowCheckoutAuth] = useState(false);
-  const [showSimplePayment, setShowSimplePayment] = useState(false);
+  const [showSimpleStripePayment, setShowSimpleStripePayment] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Product | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const [orderType, setOrderType] = useState<OrderType>('pickup');
@@ -447,11 +447,11 @@ const Menu: React.FC = () => {
       couponCode: '',
       couponDiscount: 0,
     });
-    setShowSimplePayment(true);
+    setShowSimpleStripePayment(true);
   };
 
   const handlePaymentComplete = () => {
-    setShowSimplePayment(false);
+    setShowSimpleStripePayment(false);
     setShowConfirmation(true);
     resetSession();
   };
@@ -573,11 +573,11 @@ const Menu: React.FC = () => {
         />
       )}
 
-      {/* Simple Payment Modal */}
-      {showSimplePayment && (
-        <SimplePaymentModal
-          isOpen={showSimplePayment}
-          onClose={() => setShowSimplePayment(false)}
+      {/* Simple Stripe Payment Modal */}
+      {showSimpleStripePayment && (
+        <SimpleStripePaymentModal
+          isOpen={showSimpleStripePayment}
+          onClose={() => setShowSimpleStripePayment(false)}
           onComplete={handlePaymentComplete}
           customerData={tempCustomerData}
           cart={cart}
