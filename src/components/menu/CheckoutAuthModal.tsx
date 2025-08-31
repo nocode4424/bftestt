@@ -28,10 +28,9 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
   restaurant,
   total
 }) => {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<'choice' | 'login' | 'signup'>('choice');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSignupForm, setShowSignupForm] = useState(false);
   
   // Login form
   const [loginEmail, setLoginEmail] = useState('');
@@ -82,10 +81,10 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
       if (error) {
         // Check if user doesn't exist
         if (error.message.includes('Invalid login credentials') || error.message.includes('Email not confirmed')) {
-          // User doesn't exist or email not confirmed, show signup form
+          // User doesn't exist, show signup form
           setSignupEmail(loginEmail);
           setSignupPassword(loginPassword);
-          setShowSignupForm(true);
+          setMode('signup');
           setError('Account not found. Please create an account to continue.');
           return;
         }
@@ -256,7 +255,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
     setConfirmPassword('');
     setAgreedToTerms(false);
     setError(null);
-    setShowSignupForm(false);
+    setMode('choice');
   };
 
   return (
@@ -325,14 +324,52 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
 
           {/* Authentication */}
           <div className="space-y-4">
-            {!showSignupForm ? (
+            {mode === 'choice' && (
+              /* Choice Screen */
+              <Card className="bg-white shadow-lg border-2 border-gray-100">
+                <CardHeader>
+                  <CardTitle className="text-center text-gray-900 text-xl">
+                    Choose Your Option
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button
+                    onClick={() => setMode('login')}
+                    className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    onClick={() => setMode('signup')}
+                    variant="outline"
+                    className="w-full h-14 text-lg font-semibold border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+                    size="lg"
+                  >
+                    Sign Up
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {mode === 'login' && (
               /* Login Form */
               <Card className="bg-white shadow-lg border-2 border-gray-100">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-gray-900">
-                    <User className="h-4 w-4" />
-                    Sign In to Continue
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-gray-900">
+                      <User className="h-4 w-4" />
+                      Sign In
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMode('choice')}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ← Back
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -367,15 +404,26 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                   </Button>
                 </CardContent>
               </Card>
-            ) : (
+            )}
+
+            {mode === 'signup' && (
               /* Signup Form */
               <Card className="bg-white shadow-lg border-2 border-gray-100">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-gray-900">
-                    <User className="h-4 w-4" />
-                    Create Your Account
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">Please complete your account information</p>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-gray-900">
+                      <User className="h-4 w-4" />
+                      Sign Up
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMode('choice')}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ← Back
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
