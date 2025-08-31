@@ -1,0 +1,240 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Modern Sushi Restaurant Theme */
+    --background: 207 69% 15%; /* Dark blue background */
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+
+    /* Ocean Blue Primary (#2671BC) */
+    --primary: 207 69% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Light Ocean Blue (#8ECAE6) */
+    --secondary: 190 55% 70%;
+    --secondary-foreground: 0 0% 8%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    /* Orange Accent (#E97700) */
+    --accent: 27 94% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Bold Orange (#D1470B) */
+    --destructive: 16 91% 44%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 207 40% 30%;
+    --input: 0 0% 98%;
+    --ring: 207 69% 45%;
+
+    /* Kitchen status colors */
+    --kitchen-new: 0 84% 60%;
+    --kitchen-new-foreground: 0 0% 100%;
+    --kitchen-acknowledged: 37 92% 50%;
+    --kitchen-acknowledged-foreground: 0 0% 100%;
+    --kitchen-preparing: 217 91% 60%;
+    --kitchen-preparing-foreground: 0 0% 100%;
+    --kitchen-ready: 158 64% 52%;
+    --kitchen-ready-foreground: 0 0% 100%;
+
+    --kitchen-success: 120 100% 40%;
+    --kitchen-warning: 45 100% 55%;
+    --kitchen-danger: 0 100% 55%;
+    --kitchen-info: 210 100% 55%;
+
+    --radius: 0.4rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Modern Sushi Restaurant Dark Theme */
+    --background: 207 69% 15%; /* Dark blue background */
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+
+    /* Ocean Blue Primary */
+    --primary: 207 69% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Light Ocean Blue */
+    --secondary: 190 55% 70%;
+    --secondary-foreground: 0 0% 8%;
+
+    --muted: 207 40% 20%;
+    --muted-foreground: 0 0% 70%;
+
+    /* Orange Accent */
+    --accent: 27 94% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Bold Orange */
+    --destructive: 16 91% 44%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 207 40% 30%;
+    --input: 207 40% 20%;
+    --ring: 207 69% 45%;
+
+    /* Sushi Colors */
+    --sushi-ocean-blue: 207 69% 45%;     /* #2671BC */
+    --sushi-light-blue: 190 55% 70%;     /* #8ECAE6 */
+    --sushi-bold-orange: 16 91% 44%;     /* #D1470B */
+    --sushi-warm-orange: 27 94% 45%;     /* #E97700 */
+    --sushi-best-seller: 27 94% 45%;
+
+    --sidebar-background: 207 40% 12%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 207 69% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 207 40% 20%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 207 40% 25%;
+    --sidebar-ring: 207 69% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+}
+
+@layer components {
+  /* Modern Sushi Restaurant Components */
+  .menu-gradient-bg {
+    background: linear-gradient(180deg, #2671BC 0%, #1a4d8a 100%);
+    min-height: 100vh;
+  }
+  
+  .card-glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+  }
+  
+  .card-solid {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #2671BC, #1a4d8a);
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(38, 113, 188, 0.3);
+  }
+  
+  .btn-accent {
+    background: linear-gradient(135deg, #E97700, #D1470B);
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-accent:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(233, 119, 0, 0.3);
+  }
+  
+  .price-tag {
+    background: linear-gradient(135deg, #E97700, #D1470B);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+  
+  .special-badge {
+    background: linear-gradient(135deg, #E97700, #D1470B);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .section-title {
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .menu-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    border-top: 3px solid #E97700;
+    transition: all 0.2s ease;
+  }
+  
+  .menu-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+  
+  .hashtag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .text-stroke {
+    -webkit-text-stroke: 1px black;
+    text-stroke: 1px black;
+  }
+  
+  .text-stroke-thin {
+    -webkit-text-stroke: 0.5px black;
+    text-stroke: 0.5px black;
+  }
+}

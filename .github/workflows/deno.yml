@@ -1,0 +1,27 @@
+name: CI - Deno Tests
+
+on:
+  push:
+    paths:
+      - '**/*.ts'
+      - '.github/workflows/deno.yml'
+  pull_request:
+    paths:
+      - '**/*.ts'
+      - '.github/workflows/deno.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Run Deno tests
+        run: deno test -A --lock=lock.json --lock-write
+

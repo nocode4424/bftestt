@@ -1,0 +1,32 @@
+[Unit]
+Description=Bluefin Sushi Order Alert Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=sushi
+Group=sushi
+WorkingDirectory=/opt/sushi-order
+ExecStart=/usr/local/bin/deno run --allow-net --allow-env server/order-alert.ts
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables
+Environment=PORT=8000
+Environment=ORDER_ALERT_SECRET=YOUR_SECRET_HERE
+Environment=MAC_DISPATCH_URL=http://192.168.1.100:7777
+
+# Security settings
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

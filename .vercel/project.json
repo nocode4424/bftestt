@@ -1,0 +1,36 @@
+{
+  "projectId": "bluefin-sushi-order-system",
+  "orgId": "your-vercel-org-id",
+  "settings": {
+    "buildCommand": "npm run build",
+    "devCommand": "npm run dev",
+    "installCommand": "npm install",
+    "outputDirectory": "dist",
+    "framework": "vite"
+  },
+  "alias": [
+    "menu.bluefinwc.com",
+    "admin.bluefinwc.com", 
+    "orders.bluefinwc.com"
+  ],
+  "env": [
+    {
+      "key": "VITE_MENU_DOMAIN",
+      "value": "menu.bluefinwc.com",
+      "type": "plain",
+      "target": ["production", "preview", "development"]
+    },
+    {
+      "key": "VITE_ADMIN_DOMAIN", 
+      "value": "admin.bluefinwc.com",
+      "type": "plain",
+      "target": ["production", "preview", "development"]
+    },
+    {
+      "key": "VITE_KITCHEN_DOMAIN",
+      "value": "orders.bluefinwc.com", 
+      "type": "plain",
+      "target": ["production", "preview", "development"]
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import Stripe from 'https://esm.sh/stripe@14.5.0'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  console.log('🚀 Payment Intent Function Started')
+  console.log('Request method:', req.method)
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()))
+  
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight handled')
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    console.log('🔍 Checking environment variables...')
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
+    
+    console.log('Environment check:', {
+      hasStripeKey: !!stripeSecretKey,
+      keyPrefix: stripeSecretKey ? stripeSecretKey.substring(0, 15) + '...' : 'MISSING'
+    })
+    
+    if (!stripeSecretKey) {
+      console.error('❌ Stripe secret key not configured')
+      throw new Error('Stripe secret key not configured')
+    }
+
+    console.log('🔧 Initializing Stripe with API version 2024-08-01')
+    let stripe
+    try {
+      stripe = new Stripe(stripeSecretKey, {
+        apiVersion: '2024-08-01',
+      })
+      console.log('✅ Stripe initialized successfully')
+    } catch (stripeInitError) {
+      console.error('❌ Failed to initialize Stripe:', stripeInitError)
+      throw new Error('Stripe initialization failed: ' + stripeInitError.message)
+    }
+    
+    // Test Stripe connection by fetching account info
+    try {
+      console.log('🧪 Testing Stripe connection...')
+      const account = await stripe.accounts.retrieve()
+      console.log('✅ Stripe connection test successful:', {
+        id: account.id,
+        email: account.email,
+        country: account.country,
+        charges_enabled: account.charges_enabled,
+        payouts_enabled: account.payouts_enabled
+      })
+    } catch (connectionError) {
+      console.error('❌ Stripe connection test failed:', connectionError)
+      throw new Error('Stripe connection failed: ' + connectionError.message)
+    }
+
+    console.log('📝 Parsing request body...')
+    let requestBody
+    try {
+      requestBody = await req.json()
+    } catch (parseError) {
+      console.error('❌ Failed to parse request body:', parseError)
+      throw new Error('Invalid JSON in request body')
+    }
+    
+    const { 
+      amount,
+      currency = 'usd',
+      customerInfo,
+      restaurant,
+      orderType,
+      metadata = {}
+    } = requestBody
+
+    console.log('📊 Request data received:', {
+      amount,
+      currency,
+      restaurantId: restaurant?.id,
+      restaurantName: restaurant?.name,
+      customerEmail: customerInfo?.email,
+      customerName: customerInfo?.name,
+      orderType,
+      metadataKeys: Object.keys(metadata),
+      fullRequestBody: requestBody
+    })
+
+    // Validate required fields
+    console.log('✅ Validating required fields...')
+    
+    if (!amount || amount <= 0) {
+      console.error('❌ Invalid amount:', amount)
+      throw new Error('Invalid payment amount')
+    }
+    
+    if (!customerInfo?.email) {
+      console.error('❌ Missing customer email:', customerInfo)
+      throw new Error('Customer email required')
+    }
+    
+    console.log('✅ Validation passed')
+
+    // Fixed connected account ID
+    const connectedAccountId = 'acct_1Rcf9pQ5nGi8wO63'
+    console.log('🏦 Using connected account:', connectedAccountId)
+    
+    // Test connected account exists and is valid
+    try {
+      console.log('🧪 Testing connected account...')
+      const connectedAccount = await stripe.accounts.retrieve(connectedAccountId)
+      console.log('✅ Connected account test successful:', {
+        id: connectedAccount.id,
+        email: connectedAccount.email,
+        country: connectedAccount.country,
+        charges_enabled: connectedAccount.charges_enabled,
+        payouts_enabled: connectedAccount.payouts_enabled,
+        details_submitted: connectedAccount.details_submitted
+      })
+    } catch (accountError) {
+      console.error('❌ Connected account test failed:', accountError)
+      throw new Error('Connected account invalid: ' + accountError.message)
+    }
+    
+    // Find or create customer on the platform account (not connected account)
+    let customerId = null
+    console.log('👤 Finding or creating customer on platform account...')
+    
+    try {
+      console.log('🔍 Searching for existing customer:', customerInfo.email)
+      
+      const existing = await stripe.customers.list({ 
+        email: customerInfo.email, 
+        limit: 1 
+      })
+      
+      console.log('🔍 Customer search result:', {
+        found: existing.data.length,
+        customers: existing.data.map(c => ({ id: c.id, email: c.email, name: c.name }))
+      })
+      
+      if (existing.data && existing.data.length > 0) {
+        customerId = existing.data[0].id
+        console.log('✅ Found existing customer:', customerId)
+      } else {
+        console.log('➕ Creating new customer...')
+        const customerData = {
+          email: customerInfo.email,
+          name: customerInfo.name,
+          phone: customerInfo.phone,
+        }
+        console.log('Customer data to create:', customerData)
+        
+        const created = await stripe.customers.create(customerData)
+        customerId = created.id
+        console.log('✅ Created new customer:', customerId)
+      }
+    } catch (custErr) {
+      console.error('⚠️ Customer creation/lookup failed:', {
+        error: custErr.message,
+        type: custErr.type,
+        code: custErr.code,
+        stack: custErr.stack
+      })
+      console.log('Proceeding without customer ID')
+    }
+
+    // Create payment intent with transfer to connected account
+    const amountInCents = Math.round(amount * 100)
+    console.log('💰 Payment calculation:', {
+      originalAmount: amount,
+      amountInCents,
+      currency
+    })
+    
+    const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
+      amount: amountInCents,
+      currency,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      receipt_email: customerInfo?.email,
+      customer: customerId,
+      transfer_data: {
+        destination: connectedAccountId,
+      },
+      metadata: {
+        restaurant_id: restaurant?.id || '',
+        restaurant_name: restaurant?.name || '',
+        customer_name: customerInfo?.name || '',
+        customer_email: customerInfo?.email || '',
+        customer_phone: customerInfo?.phone || '',
+        order_type: orderType || 'restaurant_order',
+        ...metadata
+      }
+    }
+    
+    console.log('🔧 Payment Intent parameters:', {
+      ...paymentIntentParams,
+      // Don't log the full metadata to avoid clutter
+      metadata: {
+        ...paymentIntentParams.metadata,
+        keys: Object.keys(paymentIntentParams.metadata)
+      }
+    })
+
+    console.log('🚀 Creating Stripe Payment Intent...')
+    let paymentIntent
+    try {
+      paymentIntent = await stripe.paymentIntents.create(paymentIntentParams)
+      console.log('✅ Payment Intent created successfully:', {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status,
+        client_secret: paymentIntent.client_secret ? 'pi_...secret_...' : 'NO CLIENT SECRET'
+      })
+    } catch (stripeError) {
+      console.error('❌ Stripe Payment Intent creation failed:', {
+        message: stripeError.message,
+        type: stripeError.type,
+        code: stripeError.code,
+        decline_code: stripeError.decline_code,
+        param: stripeError.param,
+        stack: stripeError.stack
+      })
+      throw stripeError
+    }
+
+    console.log('✅ Payment intent created successfully:', paymentIntent.id)
+
+    const responseData = {
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      amount: paymentIntent.amount,
+      customerId: customerId,
+    }
+    
+    console.log('📤 Returning success response:', {
+      ...responseData,
+      clientSecret: responseData.clientSecret ? 'pi_...secret_...' : 'MISSING'
+    })
+
+    return new Response(JSON.stringify(responseData), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    })
+
+  } catch (error) {
+    console.error('❌ FATAL ERROR in payment intent creation:', {
+      message: error.message,
+      name: error.name,
+      type: error.type,
+      code: error.code,
+      stack: error.stack,
+      fullError: error
+    })
+    
+    const errorResponse = {
+      success: false,
+      error: error.message || 'Failed to create payment intent',
+      errorType: error.type || 'unknown',
+      errorCode: error.code || 'unknown'
+    }
+    
+    console.log('📤 Returning error response:', errorResponse)
+    
+    return new Response(JSON.stringify(errorResponse), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    })
+  }
+})
