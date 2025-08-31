@@ -8,7 +8,8 @@ import { CartSidebar } from '@/components/menu/CartSidebar';
 import { ItemCustomizationModal } from '@/components/menu/ItemCustomizationModal';
 import { CartTimeoutWarning } from '@/components/menu/CartTimeoutWarning';
 import { StripeProvider } from '@/components/payment/StripeProvider';
-import { StripeCheckoutModal } from '@/components/menu/StripeCheckoutModal';
+import { EnhancedStripeCheckoutModal } from '@/components/menu/EnhancedStripeCheckoutModal';
+import { CheckoutCookieService } from '@/utils/checkoutCookieService';
 import { OrderConfirmation } from '@/components/menu/OrderConfirmation';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -195,6 +196,25 @@ const Menu: React.FC = () => {
     
     // Handle visitor tracking and welcome messages
     handleVisitorTracking();
+    
+    // Load saved checkout preferences
+    const savedData = CheckoutCookieService.getCheckoutData();
+    if (savedData) {
+      if (savedData.orderType) {
+        setOrderType(savedData.orderType);
+      }
+      if (savedData.deliveryAddress) {
+        setDeliveryAddress(savedData.deliveryAddress);
+      }
+      if (savedData.customerInfo) {
+        setCustomerInfo(prev => ({
+          ...prev,
+          name: savedData.customerInfo!.name,
+          phone: savedData.customerInfo!.phone,
+          email: savedData.customerInfo!.email
+        }));
+      }
+    }
     
     // Check for continue_checkout parameter after Google OAuth
     const urlParams = new URLSearchParams(window.location.search);
@@ -394,6 +414,11 @@ const Menu: React.FC = () => {
   };
 
   const handleStartOrder = () => {
+    // Save order preferences to cookies
+    CheckoutCookieService.saveOrderType(orderType);
+    if (deliveryAddress.trim()) {
+      CheckoutCookieService.saveDeliveryAddress(deliveryAddress);
+    }
     setShowOrderModal(false);
   };
 
@@ -525,21 +550,21 @@ const Menu: React.FC = () => {
         />
       )}
 
-      {/* Stripe Checkout Modal */}
+      {/* Enhanced Stripe Checkout Modal */}
       {showStripeCheckout && (
         <StripeProvider>
-          <StripeCheckoutModal
+          <EnhancedStripeCheckoutModal
             isOpen={showStripeCheckout}
             onClose={() => setShowStripeCheckout(false)}
             onComplete={handleStripeCheckoutComplete}
             customerName={tempCustomerData.name}
             customerPhone={tempCustomerData.phone}
             customerEmail={tempCustomerData.email}
+            cart={cart}
+            restaurant={restaurant}
+            total={getCartTotal()}
             couponCode={tempCustomerData.couponCode}
             couponDiscount={tempCustomerData.couponDiscount}
-            cartTotal={getCartTotal()}
-            cart={cart}
-            restaurantName={restaurant?.name}
           />
         </StripeProvider>
       )}

@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { Restaurant, OrderType, OrderTime } from '@/pages/Menu';
 import { cn } from '@/lib/utils';
 import OrderTypeOption from './OrderTypeOption';
+import { CheckoutCookieService } from '@/utils/checkoutCookieService';
 
 interface OrderModalProps {
   restaurant: Restaurant;
@@ -36,6 +37,19 @@ export const OrderModal = ({
   const [selectedDate, setSelectedDate] = useState<'today' | 'tomorrow'>('today');
   const [selectedTime, setSelectedTime] = useState('18:17');
 
+  // Load saved preferences from cookies
+  useEffect(() => {
+    const savedData = CheckoutCookieService.getCheckoutData();
+    if (savedData) {
+      if (savedData.orderType) {
+        setOrderType(savedData.orderType);
+      }
+      if (savedData.deliveryAddress) {
+        setDeliveryAddress(savedData.deliveryAddress);
+      }
+    }
+  }, [setOrderType, setDeliveryAddress]);
+
   useEffect(() => {
     checkRestaurantHours();
     const now = new Date();
@@ -53,6 +67,13 @@ export const OrderModal = ({
       alert('Please enter a delivery address.');
       return;
     }
+    
+    // Save preferences to cookies
+    CheckoutCookieService.saveOrderType(orderType);
+    if (deliveryAddress.trim()) {
+      CheckoutCookieService.saveDeliveryAddress(deliveryAddress);
+    }
+    
     onStartOrder(orderType, orderTime, deliveryAddress);
   };
 
