@@ -8,7 +8,8 @@ import { CartSidebar } from '@/components/menu/CartSidebar';
 import { ItemCustomizationModal } from '@/components/menu/ItemCustomizationModal';
 import { CartTimeoutWarning } from '@/components/menu/CartTimeoutWarning';
 import { StripeProvider } from '@/components/payment/StripeProvider';
-import { EnhancedStripeCheckoutModal } from '@/components/menu/EnhancedStripeCheckoutModal';
+import { CheckoutAuthModal } from '@/components/menu/CheckoutAuthModal';
+import { SimplePaymentModal } from '@/components/menu/SimplePaymentModal';
 import { CheckoutCookieService } from '@/utils/checkoutCookieService';
 import { OrderConfirmation } from '@/components/menu/OrderConfirmation';
 import { Search } from 'lucide-react';
@@ -79,7 +80,8 @@ const Menu: React.FC = () => {
   const [showItemModal, setShowItemModal] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [showCheckoutAuth, setShowCheckoutAuth] = useState(false);
+  const [showSimplePayment, setShowSimplePayment] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Product | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const [orderType, setOrderType] = useState<OrderType>('pickup');
@@ -433,19 +435,23 @@ const Menu: React.FC = () => {
     console.log('cart:', cart);
     
     setShowCartSidebar(false);
+    setShowCheckoutAuth(true);
+  };
+
+  const handleAuthComplete = (customerData: { name: string; phone: string; email: string; userId?: string }) => {
+    setShowCheckoutAuth(false);
     setTempCustomerData({
       name: customerData.name,
       phone: customerData.phone,
       email: customerData.email,
-      couponCode: customerData.couponCode,
-      couponDiscount: customerData.couponDiscount,
+      couponCode: '',
+      couponDiscount: 0,
     });
-    setShowStripeCheckout(true);
-    console.log('showStripeCheckout set to true');
+    setShowSimplePayment(true);
   };
 
-  const handleStripeCheckoutComplete = () => {
-    setShowStripeCheckout(false);
+  const handlePaymentComplete = () => {
+    setShowSimplePayment(false);
     setShowConfirmation(true);
     resetSession();
   };
@@ -490,8 +496,7 @@ const Menu: React.FC = () => {
   }
 
   return (
-    <StripeProvider>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Debug info */}
       <div className="fixed top-4 right-4 bg-red-500 text-white p-2 rounded text-xs z-50">
         Menu loaded! Restaurant: {restaurant ? restaurant.name : 'null'}
@@ -556,20 +561,28 @@ const Menu: React.FC = () => {
         />
       )}
 
-      {/* Enhanced Stripe Checkout Modal */}
-      {showStripeCheckout && (
-        <EnhancedStripeCheckoutModal
-          isOpen={showStripeCheckout}
-          onClose={() => setShowStripeCheckout(false)}
-          onComplete={handleStripeCheckoutComplete}
-          customerName={tempCustomerData.name}
-          customerPhone={tempCustomerData.phone}
-          customerEmail={tempCustomerData.email}
+      {/* Checkout Authentication Modal */}
+      {showCheckoutAuth && (
+        <CheckoutAuthModal
+          isOpen={showCheckoutAuth}
+          onClose={() => setShowCheckoutAuth(false)}
+          onContinue={handleAuthComplete}
           cart={cart}
           restaurant={restaurant}
           total={getCartTotal()}
-          couponCode={tempCustomerData.couponCode}
-          couponDiscount={tempCustomerData.couponDiscount}
+        />
+      )}
+
+      {/* Simple Payment Modal */}
+      {showSimplePayment && (
+        <SimplePaymentModal
+          isOpen={showSimplePayment}
+          onClose={() => setShowSimplePayment(false)}
+          onComplete={handlePaymentComplete}
+          customerData={tempCustomerData}
+          cart={cart}
+          restaurant={restaurant}
+          total={getCartTotal()}
         />
       )}
 
@@ -610,7 +623,6 @@ const Menu: React.FC = () => {
         />
       )}
       </div>
-    </StripeProvider>
   );
 };
 
