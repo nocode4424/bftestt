@@ -11,7 +11,13 @@ import { Minus, Plus, X } from 'lucide-react';
 import { Product, CartItem } from '@/pages/Menu';
 import { supabase } from '@/integrations/supabase/client';
 
-
+interface UpsellProduct {
+  id: string;
+  name: string;
+  base_price: number;
+  description: string;
+  image_url: string;
+}
 
 interface ModifierGroup {
   id: string;
@@ -49,6 +55,8 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
   });
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
+  const [upsellProducts, setUpsellProducts] = useState<UpsellProduct[]>([]);
+  const [selectedUpsells, setSelectedUpsells] = useState<Set<string>>(new Set());
   const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
   const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -58,11 +66,35 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
     console.log('ItemCustomizationModal mounted for product:', product.name, product.id);
     const loadData = async () => {
       setLoading(true);
-      await fetchModifierGroups();
+      await Promise.all([
+        fetchUpsellProducts(),
+        fetchModifierGroups()
+      ]);
       setLoading(false);
     };
     loadData();
   }, [product.id]);
+
+  const fetchUpsellProducts = async () => {
+    try {
+      // Fetch upsell products for this item, but exclude Fried Oreos
+      const { data: products, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('restaurant_id', product.restaurant_id)
+        .eq('is_active', true)
+        .neq('id', product.id)
+        .not('name', 'ilike', '%fried oreos%')
+        .not('name', 'ilike', '%oreo%')
+        .limit(3);
+
+      if (error) throw error;
+      
+      setUpsellProducts(products || []);
+    } catch (error) {
+      console.error('Error fetching upsell products:', error);
+    }
+  };
 
 
 
@@ -158,7 +190,15 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
     }
   };
 
-
+  const toggleUpsell = (productId: string) => {
+    const newSelected = new Set(selectedUpsells);
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId);
+    } else {
+      newSelected.add(productId);
+    }
+    setSelectedUpsells(newSelected);
+  };
 
   const calculateTotal = () => {
     let total = (product.base_price || 0) * quantity;
@@ -171,6 +211,14 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
           total += (modifier.price_adjustment || 0) * quantity;
         }
       });
+    });
+    
+    // Add upsell costs
+    selectedUpsells.forEach(upsellId => {
+      const upsellProduct = upsellProducts.find(p => p.id === upsellId);
+      if (upsellProduct) {
+        total += (upsellProduct.base_price || 0) * quantity;
+      }
     });
     
     // Ensure total is never negative
@@ -199,6 +247,15 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
     
     if (selectedModifierDetails.length > 0) {
       customizations.modifiers = selectedModifierDetails;
+    }
+    
+    if (selectedUpsells.size > 0) {
+      const selectedUpsellProducts = upsellProducts.filter(p => selectedUpsells.has(p.id));
+      customizations.upsells = selectedUpsellProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.base_price
+      }));
     }
 
     const cartItem: CartItem = {
@@ -294,7 +351,48 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
             </div>
           )}
 
-
+          {/* Upsells */}
+          {!loading && upsellProducts.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-lg mb-2">Add to your order</h4>
+              <div className="space-y-1">
+                {upsellProducts.map((upsellProduct) => (
+                  <div
+                    key={upsellProduct.id}
+                    className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                      selectedUpsells.has(upsellProduct.id)
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => toggleUpsell(upsellProduct.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <h5 className="font-medium">{upsellProduct.name}</h5>
+                          <span className="ml-4 text-sm text-muted-foreground">+${upsellProduct.base_price.toFixed(2)}</span>
+                        </div>
+                        {upsellProduct.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {upsellProduct.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className={`w-4 h-4 rounded border-2 transition-colors ${
+                        selectedUpsells.has(upsellProduct.id)
+                          ? 'bg-primary border-primary'
+                          : 'border-muted-foreground'
+                      }`}>
+                        {selectedUpsells.has(upsellProduct.id) && (
+                          <div className="w-full h-full rounded bg-primary"></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           {product.allow_comments && (
