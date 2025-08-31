@@ -18,7 +18,6 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     global: 'globalThis',
-    'process.env': {},
     process: JSON.stringify({
       env: {},
       version: '',

@@ -69,7 +69,7 @@ const getDomainBasedRoutes = () => {
   console.log('Loading default routes for localhost');
   return (
     <Routes>
-      <Route path="/" element={<TestMenu />} />
+      <Route path="/" element={<Menu />} />
       <Route path="/index" element={<Index />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/menu/admin" element={<MenuAdmin />} />
@@ -85,20 +85,18 @@ const getDomainBasedRoutes = () => {
   );
 };
 
-const App = () => {
-  console.log('App component is rendering!');
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-4">
-          🍣 App Component Loaded!
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          React Router and other providers are working.
-        </p>
-      </div>
-    </div>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          {getDomainBasedRoutes()}
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
+);
 
 export default App;
