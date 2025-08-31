@@ -145,50 +145,86 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            name: signupName,
+            phone: signupPhone
+          }
+        }
       });
 
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create customer profile
-        const { error: profileError } = await supabase
-          .from('customers')
-          .insert({
+        try {
+          // Create customer profile
+          const { error: profileError } = await supabase
+            .from('customers')
+            .insert({
+              id: authData.user.id,
+              name: signupName,
+              phone: signupPhone,
+              email: signupEmail,
+              restaurant_id: restaurant.id
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            // Continue anyway - user can complete profile later
+          }
+
+          // Save user session
+          CheckoutCookieService.saveUserLogin({
             id: authData.user.id,
+            email: signupEmail,
+            name: signupName,
+            phone: signupPhone
+          });
+
+          // Save customer info to cookies
+          CheckoutCookieService.saveCustomerInfo({
+            name: signupName,
+            phone: signupPhone,
+            email: signupEmail
+          });
+
+          onContinue({
             name: signupName,
             phone: signupPhone,
             email: signupEmail,
-            restaurant_id: restaurant.id
+            userId: authData.user.id
           });
 
-        if (profileError) throw profileError;
-
-        // Save user session
-        CheckoutCookieService.saveUserLogin({
-          id: authData.user.id,
-          email: signupEmail,
-          name: signupName,
-          phone: signupPhone
-        });
-
-        // Save customer info to cookies
-        CheckoutCookieService.saveCustomerInfo({
-          name: signupName,
-          phone: signupPhone,
-          email: signupEmail
-        });
-
+          toast({
+            title: "Account Created!",
+            description: "Welcome to Bluefin Sushi! Your account has been created successfully.",
+          });
+        } catch (profileError) {
+          console.error('Profile creation failed:', profileError);
+          // Continue with checkout even if profile creation fails
+          onContinue({
+            name: signupName,
+            phone: signupPhone,
+            email: signupEmail,
+            userId: authData.user.id
+          });
+        }
+      } else if (authData.session) {
+        // User was created and confirmed immediately
         onContinue({
           name: signupName,
           phone: signupPhone,
           email: signupEmail,
-          userId: authData.user.id
+          userId: authData.session.user.id
         });
-
+      } else {
+        // Email confirmation required
         toast({
-          title: "Account Created!",
-          description: "Welcome to Bluefin Sushi! Your account has been created successfully.",
+          title: "Check Your Email",
+          description: "Please check your email to confirm your account before continuing.",
         });
+        setError('Please check your email to confirm your account');
       }
     } catch (error: any) {
       setError(error.message || 'Signup failed');
@@ -315,6 +351,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       placeholder="Enter your email"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
+                      className="text-black bg-white border-gray-300"
                     />
                   </div>
                   <div>
@@ -325,6 +362,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       placeholder="Enter your password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
+                      className="text-black bg-white border-gray-300"
                     />
                   </div>
                   <Button
@@ -355,6 +393,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       placeholder="Enter your full name"
                       value={signupName}
                       onChange={(e) => setSignupName(e.target.value)}
+                      className="text-black bg-white border-gray-300"
                     />
                   </div>
                   <div>
@@ -365,6 +404,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       placeholder="Enter your phone number"
                       value={signupPhone}
                       onChange={(e) => handlePhoneChange(e.target.value)}
+                      className="text-black bg-white border-gray-300"
                     />
                   </div>
                   <div>
@@ -375,6 +415,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       placeholder="Enter your email"
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
+                      className="text-black bg-white border-gray-300"
                     />
                   </div>
                   <div>
@@ -385,6 +426,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       placeholder="Create a password"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
+                      className="text-black bg-white border-gray-300"
                     />
                   </div>
                   <div>
@@ -395,6 +437,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                       placeholder="Confirm your password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="text-black bg-white border-gray-300"
                     />
                   </div>
                   <div className="flex items-center space-x-2">

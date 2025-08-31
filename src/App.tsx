@@ -14,7 +14,7 @@ import Auth from "./pages/Auth";
 import Kitchen from "./pages/Kitchen";
 import ModernKitchen from "./pages/ModernKitchen";
 import NotFound from "./pages/NotFound";
-import AuthCallback from "./components/auth/AuthCallback";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
