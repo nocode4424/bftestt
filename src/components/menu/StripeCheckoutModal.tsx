@@ -66,7 +66,11 @@ export const StripeCheckoutModal: React.FC<StripeCheckoutModalProps> = ({
   const [localCouponDiscount, setCouponDiscount] = useState<number>(initialCouponDiscount || 0);
   const [couponError, setCouponError] = useState<string | null>(null);
 
-  const calculateSubtotal = () => cartTotal - localCouponDiscount;
+  const calculateSubtotal = () => {
+    const subtotal = cartTotal - localCouponDiscount;
+    // Ensure subtotal is never negative
+    return Math.max(0, subtotal);
+  };
 
   const calculateTaxAndProcessing = () => {
     const subtotal = calculateSubtotal();

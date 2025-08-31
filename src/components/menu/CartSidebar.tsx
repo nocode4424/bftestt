@@ -35,7 +35,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showExpandedItems, setShowExpandedItems] = useState(false);
 
-  const subtotal = total;
+  const subtotal = Math.max(0, total); // Ensure subtotal is never negative
   const taxAndFees = subtotal * 0.065 + 2.49 + (subtotal > 50 ? (subtotal - 50) * 0.05 : 0);
   const finalTotal = subtotal + taxAndFees;
 

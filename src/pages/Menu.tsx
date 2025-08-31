@@ -384,7 +384,9 @@ const Menu: React.FC = () => {
   };
 
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.total_price, 0);
+    const total = cart.reduce((total, item) => total + (item.total_price || 0), 0);
+    // Ensure cart total is never negative
+    return Math.max(0, total);
   };
 
   const getCartItemCount = () => {

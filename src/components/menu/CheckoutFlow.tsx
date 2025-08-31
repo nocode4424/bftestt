@@ -58,7 +58,9 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({
   const { toast } = useToast();
 
   const calculateSubtotal = () => {
-    return cart.reduce((total, item) => total + item.total_price, 0);
+    const subtotal = cart.reduce((total, item) => total + (item.total_price || 0), 0);
+    // Ensure subtotal is never negative
+    return Math.max(0, subtotal);
   };
 
   const calculateTaxAndProcessing = () => {

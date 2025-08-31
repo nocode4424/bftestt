@@ -198,14 +198,14 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
   };
 
   const calculateTotal = () => {
-    let total = product.base_price * quantity;
+    let total = (product.base_price || 0) * quantity;
     
     // Add modifier costs
     Object.values(selectedModifiers).forEach(modifierId => {
       modifierGroups.forEach(group => {
         const modifier = group.modifiers.find(m => m.id === modifierId);
         if (modifier) {
-          total += modifier.price_adjustment * quantity;
+          total += (modifier.price_adjustment || 0) * quantity;
         }
       });
     });
@@ -213,11 +213,12 @@ export const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
     selectedUpsells.forEach(upsellId => {
       const upsellProduct = upsellProducts.find(p => p.id === upsellId);
       if (upsellProduct) {
-        total += upsellProduct.base_price * quantity;
+        total += (upsellProduct.base_price || 0) * quantity;
       }
     });
     
-    return total;
+    // Ensure total is never negative
+    return Math.max(0, total);
   };
 
   // Debug logging

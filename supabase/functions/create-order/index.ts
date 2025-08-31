@@ -41,6 +41,13 @@ serve(async (req) => {
       total
     })
 
+    // Validate and ensure non-negative values
+    const validatedSubtotal = Math.max(0, subtotal || 0);
+    const validatedTax = Math.max(0, tax || 0);
+    const validatedProcessingFee = Math.max(0, processingFee || 0);
+    const validatedTip = Math.max(0, tip || 0);
+    const validatedTotal = Math.max(0, total || 0);
+
     // Create order record
     const orderData = {
       restaurant_id: restaurant.id,
@@ -51,15 +58,19 @@ serve(async (req) => {
       delivery_type: orderType,
       cart: {
         items: cart,
-        subtotal,
-        tax,
-        processingFee,
-        tip,
-        total,
+        subtotal: validatedSubtotal,
+        tax: validatedTax,
+        processingFee: validatedProcessingFee,
+        tip: validatedTip,
+        total: validatedTotal,
         orderTime,
         scheduledDateTime
       },
-      total,
+      subtotal: validatedSubtotal,
+      tax: validatedTax,
+      processing_fee: validatedProcessingFee,
+      tip: validatedTip,
+      total: validatedTotal,
       payment_intent_id: paymentIntentId,
       payment_status: 'succeeded', // Order only created after payment succeeds
       status: 'new',
@@ -173,12 +184,14 @@ serve(async (req) => {
       status: 200,
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating order:', error)
+    
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create order';
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Failed to create order'
+      error: errorMessage
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

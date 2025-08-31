@@ -32,9 +32,20 @@ serve(async (req) => {
       metadata = {}
     } = requestBody
 
-    // Validate amount
+    // Validate amount - ensure it's positive and reasonable
     if (!amount || amount <= 0) {
-      throw new Error('Invalid payment amount')
+      throw new Error('Invalid payment amount: amount must be greater than 0')
+    }
+    
+    // Additional validation to prevent negative amounts
+    const validatedAmount = Math.max(0, amount);
+    if (validatedAmount !== amount) {
+      throw new Error('Invalid payment amount: amount cannot be negative')
+    }
+    
+    // Sanity check for extremely large amounts (optional)
+    if (validatedAmount > 10000) {
+      throw new Error('Invalid payment amount: amount exceeds maximum limit')
     }
 
     // Create customer on platform account
@@ -63,7 +74,7 @@ serve(async (req) => {
 
     // Create payment intent with transfer to connected account
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: Math.round(validatedAmount * 100), // Convert to cents
       currency: 'usd',
       customer: customerId,
       automatic_payment_methods: {
