@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Lock, Mail, Phone, ArrowLeft, CreditCard } from 'lucide-react';
+import { User, Lock, Mail, Phone, ArrowLeft, CreditCard, ShoppingBag } from 'lucide-react';
 import { Restaurant, CartItem } from '@/pages/Menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +31,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSignupForm, setShowSignupForm] = useState(false);
   
   // Login form
   const [loginEmail, setLoginEmail] = useState('');
@@ -50,21 +51,17 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
     return cart.reduce((total, item) => total + item.total_price, 0);
   };
 
-  const calculateTax = () => {
+  const calculateTaxAndFees = () => {
     const subtotal = calculateSubtotal();
-    return Math.round(subtotal * 0.065 * 100) / 100; // 6.5% tax
-  };
-
-  const calculateProcessingFee = () => {
-    const subtotal = calculateSubtotal();
-    return Math.round(subtotal * 0.03 * 100) / 100; // 3% processing fee
+    const tax = Math.round(subtotal * 0.065 * 100) / 100; // 6.5% tax
+    const processingFee = Math.round(subtotal * 0.03 * 100) / 100; // 3% processing fee
+    return tax + processingFee;
   };
 
   const calculateGrandTotal = () => {
     const subtotal = calculateSubtotal();
-    const tax = calculateTax();
-    const processingFee = calculateProcessingFee();
-    return subtotal + tax + processingFee;
+    const taxAndFees = calculateTaxAndFees();
+    return subtotal + taxAndFees;
   };
 
   const handleLogin = async () => {
@@ -82,7 +79,18 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
         password: loginPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if user doesn't exist
+        if (error.message.includes('Invalid login credentials') || error.message.includes('Email not confirmed')) {
+          // User doesn't exist or email not confirmed, show signup form
+          setSignupEmail(loginEmail);
+          setSignupPassword(loginPassword);
+          setShowSignupForm(true);
+          setError('Account not found. Please create an account to continue.');
+          return;
+        }
+        throw error;
+      }
 
       if (data.user) {
         // Get user profile data
@@ -141,12 +149,11 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
     setError(null);
 
     try {
-      // Create user account
+      // Create user account without email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             name: signupName,
             phone: signupPhone
@@ -210,21 +217,6 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
             userId: authData.user.id
           });
         }
-      } else if (authData.session) {
-        // User was created and confirmed immediately
-        onContinue({
-          name: signupName,
-          phone: signupPhone,
-          email: signupEmail,
-          userId: authData.session.user.id
-        });
-      } else {
-        // Email confirmation required
-        toast({
-          title: "Check Your Email",
-          description: "Please check your email to confirm your account before continuing.",
-        });
-        setError('Please check your email to confirm your account');
       }
     } catch (error: any) {
       setError(error.message || 'Signup failed');
@@ -254,8 +246,26 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
     setSignupPhone(formattedPhone);
   };
 
+  const resetForm = () => {
+    setLoginEmail('');
+    setLoginPassword('');
+    setSignupName('');
+    setSignupPhone('');
+    setSignupEmail('');
+    setSignupPassword('');
+    setConfirmPassword('');
+    setAgreedToTerms(false);
+    setError(null);
+    setShowSignupForm(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        resetForm();
+      }
+      onClose();
+    }}>
       <DialogContent className="max-w-2xl w-full max-h-[95vh] overflow-y-auto bg-white m-2 sm:m-4">
         <DialogHeader className="bg-[#2671BC] text-white -m-6 mb-3 p-3 rounded-t-lg">
           <DialogTitle className="text-center text-white text-lg font-semibold">
@@ -266,39 +276,45 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
         <div className="p-4">
           {/* Order Summary */}
           <div className="mb-6">
-            <Card className="bg-gray-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-900">
-                  🛒 Order Summary
+            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-blue-900 text-lg">
+                  <ShoppingBag className="h-5 w-5" />
+                  Order Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{item.product.name}</p>
-                      <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                      {item.notes && (
-                        <p className="text-xs text-gray-500">Note: {item.notes}</p>
-                      )}
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex justify-between items-start bg-white rounded-lg p-3 shadow-sm">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900">{item.product.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                            Qty: {item.quantity}
+                          </Badge>
+                          {item.notes && (
+                            <Badge variant="outline" className="text-xs">
+                              Note: {item.notes}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <p className="font-bold text-blue-900 text-lg">${item.total_price.toFixed(2)}</p>
                     </div>
-                    <p className="font-medium text-gray-900">${item.total_price.toFixed(2)}</p>
+                  ))}
+                </div>
+                
+                <div className="border-t-2 border-blue-200 pt-4 space-y-2">
+                  <div className="flex justify-between text-gray-700">
+                    <span className="font-medium">Subtotal:</span>
+                    <span className="font-semibold">${calculateSubtotal().toFixed(2)}</span>
                   </div>
-                ))}
-                <div className="border-t pt-3">
-                  <div className="flex justify-between text-gray-900">
-                    <span>Subtotal:</span>
-                    <span>${calculateSubtotal().toFixed(2)}</span>
+                  <div className="flex justify-between text-gray-700">
+                    <span className="font-medium">Tax & Processing:</span>
+                    <span className="font-semibold">${calculateTaxAndFees().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-900">
-                    <span>Tax:</span>
-                    <span>${calculateTax().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-900">
-                    <span>Processing Fee:</span>
-                    <span>${calculateProcessingFee().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg border-t pt-2 text-gray-900">
+                  <div className="flex justify-between text-blue-900 text-lg font-bold border-t border-blue-200 pt-2">
                     <span>Total:</span>
                     <span>${calculateGrandTotal().toFixed(2)}</span>
                   </div>
@@ -309,33 +325,9 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
 
           {/* Authentication */}
           <div className="space-y-4">
-            {/* Mode Toggle */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              <Button
-                variant={mode === 'login' ? 'default' : 'ghost'}
-                onClick={() => setMode('login')}
-                className="flex-1"
-              >
-                Sign In
-              </Button>
-              <Button
-                variant={mode === 'signup' ? 'default' : 'ghost'}
-                onClick={() => setMode('signup')}
-                className="flex-1"
-              >
-                Create Account
-              </Button>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-
-            {mode === 'login' ? (
+            {!showSignupForm ? (
               /* Login Form */
-              <Card className="bg-white">
+              <Card className="bg-white shadow-lg border-2 border-gray-100">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-gray-900">
                     <User className="h-4 w-4" />
@@ -344,31 +336,31 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="login-email" className="text-gray-900">Email</Label>
+                    <Label htmlFor="login-email" className="text-gray-900 font-medium">Email</Label>
                     <Input
                       id="login-email"
                       type="email"
                       placeholder="Enter your email"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
-                      className="text-black bg-white border-gray-300"
+                      className="text-black bg-white border-gray-300 h-12"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="login-password" className="text-gray-900">Password</Label>
+                    <Label htmlFor="login-password" className="text-gray-900 font-medium">Password</Label>
                     <Input
                       id="login-password"
                       type="password"
                       placeholder="Enter your password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="text-black bg-white border-gray-300"
+                      className="text-black bg-white border-gray-300 h-12"
                     />
                   </div>
                   <Button
                     onClick={handleLogin}
                     disabled={isLoading}
-                    className="w-full"
+                    className="w-full h-12 text-lg font-semibold"
                     size="lg"
                   >
                     {isLoading ? 'Signing In...' : 'Sign In & Continue'}
@@ -377,67 +369,68 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
               </Card>
             ) : (
               /* Signup Form */
-              <Card className="bg-white">
+              <Card className="bg-white shadow-lg border-2 border-gray-100">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-gray-900">
                     <User className="h-4 w-4" />
                     Create Your Account
                   </CardTitle>
+                  <p className="text-sm text-gray-600">Please complete your account information</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="signup-name" className="text-gray-900">Full Name</Label>
+                    <Label htmlFor="signup-name" className="text-gray-900 font-medium">Full Name</Label>
                     <Input
                       id="signup-name"
                       type="text"
                       placeholder="Enter your full name"
                       value={signupName}
                       onChange={(e) => setSignupName(e.target.value)}
-                      className="text-black bg-white border-gray-300"
+                      className="text-black bg-white border-gray-300 h-12"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-phone" className="text-gray-900">Phone Number</Label>
+                    <Label htmlFor="signup-phone" className="text-gray-900 font-medium">Phone Number</Label>
                     <Input
                       id="signup-phone"
                       type="tel"
                       placeholder="Enter your phone number"
                       value={signupPhone}
                       onChange={(e) => handlePhoneChange(e.target.value)}
-                      className="text-black bg-white border-gray-300"
+                      className="text-black bg-white border-gray-300 h-12"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-email" className="text-gray-900">Email</Label>
+                    <Label htmlFor="signup-email" className="text-gray-900 font-medium">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
                       placeholder="Enter your email"
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
-                      className="text-black bg-white border-gray-300"
+                      className="text-black bg-white border-gray-300 h-12"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-password" className="text-gray-900">Password</Label>
+                    <Label htmlFor="signup-password" className="text-gray-900 font-medium">Password</Label>
                     <Input
                       id="signup-password"
                       type="password"
                       placeholder="Create a password"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
-                      className="text-black bg-white border-gray-300"
+                      className="text-black bg-white border-gray-300 h-12"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="confirm-password" className="text-gray-900">Confirm Password</Label>
+                    <Label htmlFor="confirm-password" className="text-gray-900 font-medium">Confirm Password</Label>
                     <Input
                       id="confirm-password"
                       type="password"
-                      placeholder="Confirm your password"
+                      placeholder="Type your password one more time"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="text-black bg-white border-gray-300"
+                      className="text-black bg-white border-gray-300 h-12"
                     />
                   </div>
                   <div className="flex items-center space-x-2">
@@ -455,13 +448,19 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
                   <Button
                     onClick={handleSignup}
                     disabled={isLoading}
-                    className="w-full"
+                    className="w-full h-12 text-lg font-semibold"
                     size="lg"
                   >
                     {isLoading ? 'Creating Account...' : 'Create Account & Continue'}
                   </Button>
                 </CardContent>
               </Card>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {error}
+              </div>
             )}
           </div>
         </div>
