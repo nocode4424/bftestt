@@ -1,0 +1,167 @@
+{
+  "subject": "Free Fried Oreos from Bluefin",
+  "html": "\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Free Fried Oreos from Bluefin</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            max-width: 600px;\n            margin: 0 auto;\n            padding: 20px;\n            background-color: #f4f4f4;\n        }\n        .container {\n            background-color: white;\n            padding: 30px;\n            border-radius: 10px;\n            box-shadow: 0 2px 10px rgba(0,0,0,0.1);\n        }\n        .header {\n            text-align: center;\n            margin-bottom: 30px;\n        }\n        .logo {\n            font-size: 24px;\n            font-weight: bold;\n            color: #2671BC;\n            margin-bottom: 10px;\n        }\n        .offer {\n            background-color: #f8f9fa;\n            padding: 20px;\n            border-radius: 8px;\n            margin: 20px 0;\n            border-left: 4px solid #2671BC;\n        }\n        .cta-button {\n            display: inline-block;\n            background-color: #1a4a8a;\n            color: white;\n            padding: 15px 30px;\n            text-decoration: none;\n            border-radius: 5px;\n            font-weight: bold;\n            margin: 20px 0;\n        }\n        .footer {\n            margin-top: 30px;\n            padding-top: 20px;\n            border-top: 1px solid #eee;\n            font-size: 12px;\n            color: #666;\n        }\n        .emoji {\n            font-size: 20px;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <div class=\"logo\">🍣 Bluefin Sushi</div>\n        </div>\n        \n        <h1 style=\"font-size: 32px; margin-bottom: 20px;\">Happy Labor Day! 🌞</h1>\n        \n        <p style=\"font-size: 18px; line-height: 1.6;\">At Bluefin Sushi, we're beyond grateful for you, our amazing customers. To make your holiday weekend extra delicious, we're serving up a sweet deal and introducing our brand-new Fried Oreos! 😋</p>\n        \n        <h2 style=\"font-size: 24px; margin: 30px 0 20px 0;\">Celebrate with us:</h2>\n        \n        <div class=\"offer\" style=\"font-size: 18px;\">\n            <p><span class=\"emoji\">🎁</span> Use code <strong>LABORDAY</strong> for $5 off your entire order AND get a free order of 3 Fried Oreos—a crispy, indulgent dessert that's pure joy!</p>\n        </div>\n        \n        <p style=\"font-size: 18px;\">Head to <a href=\"https://menu.bluefinwc.com\">menu.bluefinwc.com</a> to order online and satisfy your sushi and dessert cravings. This offer is valid through September 1st at 10 PM EST, so don't wait! ⏰</p>\n        \n        <a href=\"https://menu.bluefinwc.com\" class=\"cta-button\">Order Now 🍣</a>\n        \n        <p style=\"font-size: 18px;\">Thank you for choosing Bluefin Sushi. Wishing you a fantastic holiday weekend! 🌟</p>\n        \n        <p>Warmest wishes,<br>\n        The Bluefin Sushi Team</p>\n        \n        <div class=\"footer\">\n            <p>This is a promotional offer with no cash value, available online only, and may be withdrawn at any time. Valid through September 1, 2025, at 10 PM EST.</p>\n        </div>\n    </div>\n</body>\n</html>",
+  "text": "\nHappy Labor Day! 🌞\n\nAt Bluefin Sushi, we're beyond grateful for you, our amazing customers. To make your holiday weekend extra delicious, we're serving up a sweet deal and introducing our brand-new Fried Oreos! 😋\n\nCelebrate with us:\n\n🎁 Use code LABORDAY for $5 off your entire order AND get a free order of 3 Fried Oreos—a crispy, indulgent dessert that's pure joy!\n\nHead to menu.bluefinwc.com to order online and satisfy your sushi and dessert cravings. This offer is valid through September 1st at 10 PM EST, so don't wait! ⏰\n\nThank you for choosing Bluefin Sushi. Wishing you a fantastic holiday weekend! 🌟\n\nWarmest wishes,\nThe Bluefin Sushi Team\n\nThis is a promotional offer with no cash value, available online only, and may be withdrawn at any time. Valid through September 1, 2025, at 10 PM EST.",
+  "customers": [
+    {
+      "customer_name": "Justin",
+      "customer_email": "justinangelo91@gmail.com"
+    },
+    {
+      "customer_name": "Your Name Here",
+      "customer_email": "your.email@example.com"
+    },
+    {
+      "customer_name": "Brandy Holman",
+      "customer_email": "Godschild7186@yahoo.com"
+    },
+    {
+      "customer_name": "Bek",
+      "customer_email": "uyusubaliev@gmail.com"
+    },
+    {
+      "customer_name": "Leanna Burden",
+      "customer_email": "leannascolon@gmail.com"
+    },
+    {
+      "customer_name": "Nydia ",
+      "customer_email": "nydperez1@gmail.com"
+    },
+    {
+      "customer_name": "Irron Patten",
+      "customer_email": "irronpatten@hotmail.com"
+    },
+    {
+      "customer_name": "TEST",
+      "customer_email": "jeff@platedagent.com"
+    },
+    {
+      "customer_name": "Tawanna  Brown",
+      "customer_email": "dontrey3@gmail.com"
+    },
+    {
+      "customer_name": "Erin Green",
+      "customer_email": "erinmariegreen0174@gmail.com"
+    },
+    {
+      "customer_name": "Jasmynn Ive",
+      "customer_email": "jasmynnive@gmail.com"
+    },
+    {
+      "customer_name": "Evie",
+      "customer_email": "evimperezz@gmail.com"
+    },
+    {
+      "customer_name": "Veronica",
+      "customer_email": "greenveronica7@gmail.com"
+    },
+    {
+      "customer_name": "Paul Huntzinger",
+      "customer_email": "Phuntz0880@gmail.com"
+    },
+    {
+      "customer_name": "Mollyana Ward",
+      "customer_email": "rawspaceco@gmail.com"
+    },
+    {
+      "customer_name": "Keiron Ramoutar",
+      "customer_email": "87kram@gmail.com"
+    },
+    {
+      "customer_name": "Jay Donoho ",
+      "customer_email": "jaythebrit@live.com"
+    },
+    {
+      "customer_name": "Roselyn Baez ",
+      "customer_email": "rosey1301@gmail.com"
+    },
+    {
+      "customer_name": "Constance  Lower",
+      "customer_email": "celower@comcast.net"
+    },
+    {
+      "customer_name": "Dima Walters",
+      "customer_email": "dima.walters@yahoo.com"
+    },
+    {
+      "customer_name": "Carley Nguyen",
+      "customer_email": "carleynguyen8@gmail.com"
+    },
+    {
+      "customer_name": "Victoria Desmond",
+      "customer_email": "vmd123abc@gmail.com"
+    },
+    {
+      "customer_name": "Bennie Lewis",
+      "customer_email": "gbh03@yahoo.com"
+    },
+    {
+      "customer_name": "Evi Perez",
+      "customer_email": "eviand10@gmail.com"
+    },
+    {
+      "customer_name": "sdfs",
+      "customer_email": "jeff@moday.com"
+    },
+    {
+      "customer_name": "Cassidy R",
+      "customer_email": "cshea5890@gmail.com"
+    },
+    {
+      "customer_name": "Zach Bennett",
+      "customer_email": "zacharyb840@gmail.com"
+    },
+    {
+      "customer_name": "Alexis",
+      "customer_email": "alexis.balingcongan@gmail.com"
+    },
+    {
+      "customer_name": "Fred",
+      "customer_email": "fredkuchler14@gmail.com"
+    },
+    {
+      "customer_name": "Kayla Rios ",
+      "customer_email": "kaylarios98@gmail.com"
+    },
+    {
+      "customer_name": "Kat",
+      "customer_email": "khathuytruong@gmail.com"
+    },
+    {
+      "customer_name": "Noah Sanders",
+      "customer_email": "nsanders14@gmail.com"
+    },
+    {
+      "customer_name": "Darlene ",
+      "customer_email": "darlenenewton2@gmail.com"
+    },
+    {
+      "customer_name": "Adriana",
+      "customer_email": "adriana.annecchino01@gmail.com"
+    },
+    {
+      "customer_name": "Alyssa Martin",
+      "customer_email": "lita_rojo12@yahoo.com"
+    },
+    {
+      "customer_name": "Amanda Miller",
+      "customer_email": "amandamillerr7@gmail.com"
+    },
+    {
+      "customer_name": "Dusk Gosney",
+      "customer_email": "michellehughes327@gmail.com"
+    },
+    {
+      "customer_name": "Chris",
+      "customer_email": "chrisdicostanzo96@gmail.com"
+    },
+    {
+      "customer_name": "Rachel McNair",
+      "customer_email": "travelstories@mac.com"
+    },
+    {
+      "customer_name": "Krystian Morales",
+      "customer_email": "krystian.morales@gmail.com"
+    }
+  ]
+}
