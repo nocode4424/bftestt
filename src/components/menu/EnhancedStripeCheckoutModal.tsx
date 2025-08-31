@@ -41,6 +41,15 @@ export const EnhancedStripeCheckoutModal: React.FC<EnhancedStripeCheckoutModalPr
   couponCode,
   couponDiscount = 0
 }) => {
+  console.log('EnhancedStripeCheckoutModal rendering with:', {
+    isOpen,
+    customerName,
+    customerPhone,
+    customerEmail,
+    cartLength: cart?.length,
+    restaurant: restaurant?.name,
+    total
+  });
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();

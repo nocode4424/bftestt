@@ -428,6 +428,10 @@ const Menu: React.FC = () => {
   };
 
   const handleCheckout = (customerData: { name: string; phone: string; email: string; couponCode?: string; couponDiscount?: number }) => {
+    console.log('handleCheckout called with:', customerData);
+    console.log('restaurant:', restaurant);
+    console.log('cart:', cart);
+    
     setShowCartSidebar(false);
     setTempCustomerData({
       name: customerData.name,
@@ -437,6 +441,7 @@ const Menu: React.FC = () => {
       couponDiscount: customerData.couponDiscount,
     });
     setShowStripeCheckout(true);
+    console.log('showStripeCheckout set to true');
   };
 
   const handleStripeCheckoutComplete = () => {
@@ -485,7 +490,8 @@ const Menu: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <StripeProvider>
+      <div className="min-h-screen bg-background">
       {/* Debug info */}
       <div className="fixed top-4 right-4 bg-red-500 text-white p-2 rounded text-xs z-50">
         Menu loaded! Restaurant: {restaurant ? restaurant.name : 'null'}
@@ -552,21 +558,19 @@ const Menu: React.FC = () => {
 
       {/* Enhanced Stripe Checkout Modal */}
       {showStripeCheckout && (
-        <StripeProvider>
-          <EnhancedStripeCheckoutModal
-            isOpen={showStripeCheckout}
-            onClose={() => setShowStripeCheckout(false)}
-            onComplete={handleStripeCheckoutComplete}
-            customerName={tempCustomerData.name}
-            customerPhone={tempCustomerData.phone}
-            customerEmail={tempCustomerData.email}
-            cart={cart}
-            restaurant={restaurant}
-            total={getCartTotal()}
-            couponCode={tempCustomerData.couponCode}
-            couponDiscount={tempCustomerData.couponDiscount}
-          />
-        </StripeProvider>
+        <EnhancedStripeCheckoutModal
+          isOpen={showStripeCheckout}
+          onClose={() => setShowStripeCheckout(false)}
+          onComplete={handleStripeCheckoutComplete}
+          customerName={tempCustomerData.name}
+          customerPhone={tempCustomerData.phone}
+          customerEmail={tempCustomerData.email}
+          cart={cart}
+          restaurant={restaurant}
+          total={getCartTotal()}
+          couponCode={tempCustomerData.couponCode}
+          couponDiscount={tempCustomerData.couponDiscount}
+        />
       )}
 
 
@@ -605,7 +609,8 @@ const Menu: React.FC = () => {
           onClose={() => setShowTimeoutWarning(false)}
         />
       )}
-    </div>
+      </div>
+    </StripeProvider>
   );
 };
 
