@@ -149,7 +149,7 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
 
       if (data.user) {
         // Get user profile data
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('customers')
           .select('name, phone, email')
           .eq('id', data.user.id)
@@ -175,9 +175,47 @@ export const CheckoutAuthModal: React.FC<CheckoutAuthModalProps> = ({
             title: "Welcome Back!",
             description: `Great to see you again, ${profile.name}!`,
           });
+        } else {
+          // User exists in auth but not in customers table
+          // Use auth metadata or create a basic profile
+          const authUser = data.user;
+          const userName = authUser.user_metadata?.name || email.split('@')[0];
+          const userPhone = authUser.user_metadata?.phone || '';
+          
+          // Try to create customer profile
+          await supabase
+            .from('customers')
+            .insert({
+              id: authUser.id,
+              name: userName,
+              phone: userPhone,
+              email: authUser.email,
+              restaurant_id: restaurant.id
+            });
+
+          // Save user session with tokens
+          CheckoutCookieService.saveUserLogin({
+            id: authUser.id,
+            email: authUser.email,
+            name: userName,
+            phone: userPhone
+          });
+
+          onContinue({
+            name: userName,
+            phone: userPhone,
+            email: authUser.email,
+            userId: authUser.id
+          });
+
+          toast({
+            title: "Welcome Back!",
+            description: `Great to see you again, ${userName}!`,
+          });
         }
       }
     } catch (error: any) {
+      console.error('Authentication error:', error);
       setError(error.message || 'Authentication failed');
       toast({
         title: "Authentication Failed",

@@ -583,6 +583,8 @@ const Menu: React.FC = () => {
             setShowSimpleStripePayment(false);
             setShowCartSidebar(true);
           }}
+          onUpdateQuantity={updateCartItemQuantity}
+          onRemoveItem={removeFromCart}
           customerData={tempCustomerData}
           cart={cart}
           restaurant={restaurant}
